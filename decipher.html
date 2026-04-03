@@ -1,0 +1,101 @@
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+#w{background:#000;min-height:400px;padding:32px;font-family:'Courier New',monospace;display:flex;flex-direction:column;align-items:center;gap:24px}
+#screen{width:100%;max-width:600px;background:#000d1a;border:1px solid #003366;border-radius:8px;padding:28px;text-align:center}
+#cipher{font-size:28px;letter-spacing:8px;color:#0066cc;min-height:44px;word-break:break-all;line-height:1.5}
+#input-row{display:flex;gap:8px;width:100%;max-width:600px}
+#answer{flex:1;background:#000;border:1px solid #003366;border-radius:6px;padding:12px 16px;font-family:'Courier New',monospace;font-size:16px;color:#00aaff;letter-spacing:4px;outline:none;text-transform:uppercase}
+#answer:focus{border-color:#0066cc}
+#submit{background:#001a33;border:1px solid #0055aa;border-radius:6px;padding:12px 20px;color:#0088ff;font-family:'Courier New',monospace;font-size:13px;cursor:pointer;letter-spacing:2px}
+#submit:hover{background:#002244}
+#feedback{font-size:13px;letter-spacing:3px;min-height:20px;color:#004488}
+#progress{display:flex;gap:6px}
+.pip{width:10px;height:10px;border-radius:50%;background:#001a33;border:1px solid #003366;transition:background 0.3s}
+.pip.done{background:#0066cc;border-color:#0088ff}
+#score-display{font-size:11px;letter-spacing:3px;color:#003366}
+#hint-btn{background:none;border:1px solid #002244;border-radius:4px;padding:6px 12px;color:#003366;font-family:'Courier New',monospace;font-size:11px;cursor:pointer;letter-spacing:2px}
+#hint-btn:hover{border-color:#003366;color:#005599}
+#hint{font-size:11px;color:#004488;letter-spacing:1px;min-height:16px;margin-top:8px}
+</style>
+<div id="w">
+  <div id="progress"></div>
+  <div id="screen">
+    <div id="cipher">—</div>
+    <div id="hint"></div>
+  </div>
+  <div id="input-row">
+    <input id="answer" maxlength="20" placeholder="_ _ _ _ _" autocomplete="off" spellcheck="false"/>
+    <button id="hint-btn" onclick="showHint()">INDICE</button>
+    <button id="submit" onclick="check()">DÉCHIFFRER</button>
+  </div>
+  <div id="feedback"></div>
+  <div id="score-display"></div>
+</div>
+<script>
+const puzzles=[
+  {cipher:"ZDRDB",answer:"YGGDR",hint:"Début du monde virtuel",type:"caesar",shift:1},
+  {cipher:"01001101 01000101 01010011 01010011",answer:"MESS",hint:"L'intelligence de la base",type:"binary"},
+  {cipher:"19-1-14-4-25",answer:"SANDY",hint:"Le secteur des générateurs",type:"num"},
+  {cipher:"⬡ · · ⬡ · ⬡ ⬡ · · · ⬡ · · ⬡ ⬡",answer:"CORE",hint:"Noyau en morse modifié",type:"morse"},
+  {cipher:"BFOT PKZXN BFOT",answer:"MESS YGGDR MESS",hint:"ROT-7 inversé",type:"caesar",shift:-7},
+  {cipher:"C 0 N S C 1 3 N C 3",answer:"CONSCIENCE",hint:"Ce que l'IA aspire",type:"leet"},
+  {cipher:"71656E6572",answer:"GENER",hint:"Hex → texte",type:"hex"},
+  {cipher:"AIVM · AMHS · ASEO",answer:"YGGDRASIL",hint:"Premières lettres entrelacées",type:"interleave"},
+];
+
+let idx=0,score=0,hintUsed=false;
+const total=puzzles.length;
+
+function buildPips(){
+  const p=document.getElementById('progress');
+  p.innerHTML='';
+  for(let i=0;i<total;i++){const d=document.createElement('div');d.className='pip'+(i<idx?' done':'');p.appendChild(d);}
+}
+
+function load(){
+  hintUsed=false;
+  const p=puzzles[idx];
+  document.getElementById('cipher').textContent=p.cipher;
+  document.getElementById('answer').value='';
+  document.getElementById('feedback').textContent='';
+  document.getElementById('hint').textContent='';
+  document.getElementById('score-display').textContent='SCORE: '+score+' / '+(idx);
+  document.getElementById('answer').focus();
+  buildPips();
+}
+
+function showHint(){
+  if(hintUsed) return;
+  hintUsed=true;
+  document.getElementById('hint').textContent='⬡ '+puzzles[idx].hint;
+}
+
+function check(){
+  const val=document.getElementById('answer').value.trim().toUpperCase().replace(/\s+/g,' ');
+  const p=puzzles[idx];
+  const target=p.answer.toUpperCase();
+  const fb=document.getElementById('feedback');
+  if(val===target){
+    score += hintUsed?1:2;
+    fb.style.color='#0088ff';
+    fb.textContent='✓ ACCÈS ACCORDÉ';
+    setTimeout(()=>{
+      idx++;
+      if(idx>=total){
+        document.getElementById('screen').innerHTML='<div style="color:#0088ff;font-size:20px;letter-spacing:6px;padding:20px">YGGDRASIL DÉVERROUILLÉ</div><div style="color:#003366;font-size:12px;letter-spacing:3px;margin-top:12px">SCORE FINAL: '+score+' / '+(total*2)+'</div>';
+        document.getElementById('input-row').style.display='none';
+        document.getElementById('feedback').textContent='';
+        document.getElementById('progress').querySelectorAll('.pip').forEach(p=>p.classList.add('done'));
+      } else load();
+    },700);
+  } else {
+    fb.style.color='#cc2200';
+    fb.textContent='✗ ÉCHEC — RÉESSAYEZ';
+    document.getElementById('answer').value='';
+  }
+}
+
+document.getElementById('answer').addEventListener('keydown',e=>{ if(e.key==='Enter') check(); });
+load();
+</script>
